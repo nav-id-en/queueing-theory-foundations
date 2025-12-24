@@ -1,0 +1,691 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{pgfplots}  
+\usepackage{amsfonts}
+\usepackage{ifthen}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning}
+\usepackage{bm}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+
+
+
+
+\title{Queueing theory phase2}
+\author{Navid Najafi \\ mobin jelodar}
+\date{August 2022}
+
+
+
+
+\begin{document}
+
+\maketitle
+
+\section*{Simulation tasks:}
+
+
+
+\begin{tcolorbox}[colframe=blue, colback=cyan!10, coltext=black]
+
+\subsection*{Task1:Simulating of a simplified edge-server}
+
+\subsection*{finding rate of denials and Expectation number of jobs in que:}
+
+\end{tcolorbox}
+
+first we want to discuss theoretically:
+
+\subsection*{Expectation of Jobs in a Finite-Capacity Queue with Feedback}
+
+Consider a queue system with the following parameters:
+
+\begin{itemize}
+    \item Arrival rate: \( \lambda \)
+    \item Service rate: \( \mu \)
+    \item Feedback probability: \( p \)
+    \item Queue capacity: \( N \)
+\end{itemize}
+
+\subsection*{Effective Arrival Rate}
+Each job that completes service returns to the queue with probability \( p \), leading to an effective arrival rate:
+
+\[
+\lambda_{\text{eff}} = \lambda + p \mu
+\]
+
+\subsection*{Expected Number of Jobs in the Queue}
+For an \textbf{M/M/1/N} queue with feedback, the expected number of jobs in the system \( E[N] \) is approximately:
+
+\[
+E[N] \approx \frac{\rho_{\text{eff}} (1 - (N+1) \rho_{\text{eff}}^N + N \rho_{\text{eff}}^{N+1})}{(1 - \rho_{\text{eff}})(1 - \rho_{\text{eff}}^{N+1})}
+\]
+
+we will plot \(E[N]\) verse \(\lambda\) in the simulation
+
+where the \textbf{effective utilization} \( \rho_{\text{eff}} \) is:
+
+\[
+\rho_{\text{eff}} = \frac{\lambda_{\text{eff}}}{\mu} = \frac{\lambda + p \mu}{\mu}
+\]
+
+for \(\mu=9\), N=40, return-probabibilty = 0.5, we plot the \(E[N]\) verse \(\lambda\):
+
+\includegraphics[scale=0.5]{code66.jpg}
+
+it is very simillar to what we have drove in simulation.
+
+\subsection*{Special Case: Infinite Queue Capacity (\( N \to \infty \))}
+If the queue capacity is unlimited, the formula simplifies to the standard \textbf{M/M/1} expectation:
+
+\[
+E[N] = \frac{\rho_{\text{eff}}}{1 - \rho_{\text{eff}}}
+\]
+
+\subsection*{Blocking Probability in an M/M/1/N Queue with Feedback}
+
+The blocking probability (denial rate) is given by:
+
+\[
+P_{\text{block}} = \frac{\rho_{\text{eff}}^N}{\sum_{k=0}^{N} \rho_{\text{eff}}^k}
+\]
+
+Using the geometric series sum formula, it simplifies to:
+
+\[
+P_{\text{block}} = \frac{\rho_{\text{eff}}^N (1 - \rho_{\text{eff}})}{1 - \rho_{\text{eff}}^{N+1}}
+\]
+
+for \(\mu=9\), N=40, return-probabibilty = 0.5, we plot the \(P_{block}\) verse \(\lambda\):
+
+\includegraphics[scale=0.5]{code65.jpg}
+
+we will plot the relation between \(denial-rate\) and \(\lambda\).
+
+where the effective utilization is:
+
+\[
+\rho_{\text{eff}} = \frac{\lambda + p\mu}{\mu}
+\]
+
+\begin{itemize}
+    \item If \( N \to \infty \), then \( P_{\text{block}} \to 0 \), meaning no job is denied.
+    \item If \( p \) increases, more jobs return, leading to higher blocking.
+    \item If \( \mu \) increases, jobs leave faster, reducing blocking.
+    \item If \( \lambda \) increases, more jobs arrive, increasing blocking. (we will see in the simulation further)
+\end{itemize}
+
+lets break down the code:
+
+first we define our parameters:
+
+\includegraphics[scale=0.6]{code1.jpg}
+
+now we write a loop section that in each iteration determines that weather next events in arrival or departure.
+
+lets define \(T_i\) and \(S_i\) as random varaible \(Exp(\lambda)\) and \(Exp(\mu)\) in iteration number i.
+
+we are going to see an arrival only if \(T_i < S_i\) and vise versa.
+
+we have to handle that if the que if full we can not have any arrival and if the que is empty we can not have any departue. and for some reason we want to capture the number of jobs that have been denied because of que being full. so the code will be like:
+
+\includegraphics[scale=0.6]{code2.jpg}
+
+now we print and plot the results:
+
+for \(\lambda = 4\) , \(\mu =9\), \(capacity = 40\), \(P_{return} = 0.5\), simulation time  = 1000, we have:
+
+\includegraphics[scale=0.6]{code3.jpg}
+
+as you can see, the que never reached the limit, and statistically we have:
+
+\includegraphics[scale=0.6]{code4.jpg}
+
+now we want to find the relation between denial rate and rate of arrivals \(\lambda\):
+
+so we sweep \(\lambda\) and do the simulation and plot the keep denial rate and expectation number of jobs in que in a set for each \(\lambda\), the result is like:
+
+note that \(\mu = 9\) is fixed.
+
+\includegraphics[scale=0.5]{code5.jpg}
+
+we can prove by theory that this relation holds in steady state:
+
+\[
+P[\text{a job being rejected}] = P_{block} = \frac{\lambda}{\mu}\times\frac{1}{N}
+\]
+
+then we can see that relation between probability of rejection and \(\lambda\) is linear in approximation.
+
+we saw the analytic (exact) relation before (in page 3)
+
+if \(\lambda < \frac{\mu}{2}= 4.5 \) approximately, denial rate is 0, because the que has not reached saturation.
+
+we can see the slop of graph is approximately 0.678, so the relation in like:
+
+\begin{equation}  
+rate_{denials} =  
+\begin{cases}  
+  0 & \text{if } \lambda < 4.3 \\
+  0.678(\lambda - 4.3) & \text{if } \lambda >4.3 \\
+  
+\end{cases}  
+\end{equation}  
+
+\newpage
+
+
+we expect that as rate of arrivals increase, expectation number of jobs existing in the que in 1000 unit of time, get closer and closer to limit:
+
+\includegraphics[scale=0.5]{code6.jpg}
+
+now we change the code to work with a limit on total jobs (for example we have N bits totally to send) instead of simulation time.
+
+all we have done is to set a total job limitation that our while loop, iterates till the limit, also we have to keep the number of processed jobs. now we set \(\mu = 10\).
+
+if \(\lambda = 0.05\mu\) :
+
+\includegraphics[scale=0.5]{code7.jpg}
+
+\includegraphics[scale=0.5]{code8.jpg}
+
+
+\newpage
+
+if \(\lambda = 0.4\mu\) :
+
+\includegraphics[scale=0.5]{code9.jpg}
+
+\includegraphics[scale=0.5]{code10.jpg}
+
+\includegraphics[scale=0.5]{code11.jpg}
+
+so in this case, 0.012 percentage of jobs have been denied and this happend at time 10000. at that point of time the que got saturated and denied about 12 jobs, after that the que never got saturated.
+
+\newpage
+
+if \(\lambda = 0.6\mu\) :
+
+\includegraphics[scale=0.5]{code12.jpg}
+
+\includegraphics[scale=0.5]{code13.jpg}
+
+\includegraphics[scale=0.5]{code14.jpg}
+
+we can see that about 16.69 percent of jobs have been denied. you see the track of denies verses time.
+
+if \(\lambda = 2\mu\) :
+
+\includegraphics[scale=0.5]{code15.jpg}
+
+\includegraphics[scale=0.5]{code16.jpg}
+
+\includegraphics[scale=0.5]{code17.jpg}
+
+we can see that about 74.69 percent of jobs have been denied. you see the track of denies verses time.
+
+one observation is that rate of denies is constant verses time.
+
+
+\textcolor{red}{note that in this first section we did not get rid of primary data points and this can effect the values we obtained, because we always calculate and look for properties of system in steady state, then if we keep steady state data, it changes the total expectations, we will delete primary data points in next tasks.} 
+
+
+\begin{tcolorbox}[colframe=blue, colback=cyan!10, coltext=black]
+
+\subsection*{Task2:Simulating of a simplified collecting-server and main-server}
+
+\subsection*{finding Expectation number of jobs in each que:}
+
+\end{tcolorbox}
+
+we want to simulate below system. 2 intermediate collecting servers and 1 main server, collecting data from 4 edge server.
+
+\includegraphics[scale=0.5]{code18.jpg}
+
+\textcolor{red}{in this task, we don't have much theory discussion, but we have to simulate mostly. any theory discussion that is need, is provided in the corresponding simulation section.
+} 
+
+lets look at the code briefly:
+
+in this part parameters have been defines.
+
+\includegraphics[scale=0.5]{code19.jpg}
+
+in a single loop, poison processes have been implement. first (like previous task) we have to determine the next event in the system.
+
+\includegraphics[scale=0.5]{code20.jpg}
+
+now in a conditional structure, we handle the actions in each scenario.
+
+if we have an arrival in the edge servers, if they are not full, the server accept the returning job. but if the server is full, it will be denied.
+
+\includegraphics[scale=0.5]{code21.jpg}
+
+now lets see what happens if a job got its servis in edge server:
+
+\includegraphics[scale=0.5]{code22.jpg}
+
+now it is time to see what is going on in collecting server:
+
+\includegraphics[scale=0.5]{code23.jpg}
+
+and in the main server:
+
+\includegraphics[scale=0.5]{code24.jpg}
+
+now we want to calculate parameters like Expectation of jobs in each server and rate of denials in edge servers. note that we do not include 5 first percentage of data:
+
+\includegraphics[scale=0.5]{code25.jpg}
+
+now we plot the results to see the effect of our system parameters \(\lambda, \mu, P_{return}\) in the behavior of system:
+
+for example for \(\mu=10\) and \(\lambda = 0.3\mu\) and \(P_{return} = 0.5\), lets see results:
+
+state of edge server:
+
+\includegraphics[scale=0.4]{code26.jpg}
+
+state of collecting server:
+
+\includegraphics[scale=0.4]{code27.jpg}
+
+state of main server:
+
+\includegraphics[scale=0.4]{code28.jpg}
+
+here is statistical properties of system:
+
+\includegraphics[scale=0.5]{code29.jpg}
+
+lets talk about how we can calculate these statistics theoretically:
+
+as edge servers are reached the capacity limitation, we can say that the throughput rate of them equals to their arrival rate = \(\lambda\).
+
+why? because we know that when \(\lambda < \mu\), we have an steady state for the que, and then in steady steady state, we know that the jobs in que is almost constant the the rate of arrivals should be equal to departures.
+
+collecting servers are simple que servers without any limitation and feedbacks, so the expectation jobs in them equals to :
+
+note that the service rate of collecting server equals to \(2\mu\) and the input of each collecting server is cause of superposition of 2 edge server.
+
+\[
+E[jobs=N] = \frac{2\lambda}{2\mu-2\lambda}
+\]
+
+so:
+
+\[
+E[N] = \frac{2*3}{2*10-2*3}=\frac{3}{7} = 0.4285
+\]
+
+and for the main server (a simple que without capacity limitation and feedback):
+
+note that the service rate of main server equals to \(4\mu\) and the input of main server is cause of superposition of 4 edge server.
+
+
+\[
+E[jobs=N] = \frac{4\lambda}{4\mu-4\lambda} = 0.4285
+\]
+
+it is so consistent with the simulation.
+
+now we want to change \(\lambda = 1.2\mu\):
+
+\includegraphics[scale=0.4]{code30.jpg}
+
+\includegraphics[scale=0.4]{code31.jpg}
+
+\includegraphics[scale=0.4]{code32.jpg}
+
+and the statistics:
+
+\includegraphics[scale=0.5]{code33.jpg}
+
+as you can see about 14.56 percentage of jobs in the edge servers, have been denied.
+
+here i want to make an intresting point:
+
+the state of collecting servers and main server, never goes to infinity (as you change the \(\lambda\) and \(\mu\).
+
+because the throughput of edge server is always less than its arrival rate and its service rate. as \(\lambda \to \infty\) the throughput \(\to \mu\) and vice versa. so as we set the service rate of collecting servers and main server, sum of the connecting edge server, the input rate of them in always less than output rate of them and this means there is always an steady state for these servers and they do not go to infinity.
+
+in next task we will see the relation between throughput of servers and parameters of system.
+
+\textcolor{red}{note that in these two sections we simplified the returning process between collecting servers and edge servers and we simplified the memory of edge servers, it dosnt make a significant change in the results of furter tasks.} 
+
+\newpage
+
+\begin{tcolorbox}[colframe=blue, colback=cyan!10, coltext=black]
+
+\subsection*{Task3:simulating our new system and finding the throughput rate in terms of \(\lambda, \mu, P_{return}\) :}
+
+\subsection*{some insights about throughput rate:}
+
+\end{tcolorbox}
+
+\textbf{Throughput Summary for a Queue with Capacity \( C \):}
+
+\begin{itemize}
+    \item \textbf{Case 1: \( \lambda \gg \mu \)}
+    \begin{itemize}
+        \item Description: Arrival rate is much larger than the service rate.
+        \item Behavior: The queue fills up quickly, and the system is almost always at capacity.
+        \item Throughput:
+        \[
+        \text{Throughput} \approx \mu
+        \]
+    \end{itemize}
+    
+    \item \textbf{Case 2: \( \lambda > \mu \)}
+    \begin{itemize}
+        \item Description: Arrival rate is slightly higher than the service rate.
+        \item Behavior: The system often reaches capacity, rejecting some arrivals.
+        \item Throughput:
+        \[
+        \text{Throughput} = \mu \cdot P_C
+        \]
+        where \( P_C \) is the probability of the system being full.
+    \end{itemize}
+    
+    \item \textbf{Case 3: \( \mu > \lambda \)}
+    \begin{itemize}
+        \item Description: Service rate is higher than the arrival rate.
+        \item Behavior: The system is stable, with minimal blocking or rejection of arrivals.
+        \item Throughput:
+        \[
+        \text{Throughput} = \lambda \cdot (1 - P_C)
+        \]
+        For most practical systems, \( P_C \) is negligible, so:
+        \[
+        \text{Throughput} \approx \lambda
+        \]
+    \end{itemize}
+    
+    \item \textbf{Case 4: \( \mu \gg \lambda \)}
+    \begin{itemize}
+        \item Description: Service rate is much larger than the arrival rate.
+        \item Behavior: The server is often idle, and there is no queue buildup or rejection of arrivals.
+        \item Throughput:
+        \[
+        \text{Throughput} = \lambda
+        \]
+    \end{itemize}
+\end{itemize}
+
+we can do some simplifications and summary the results as:
+
+
+\\
+
+we assume:
+
+if \(\lambda >\mu\) : \(P_C\approx1\) 
+
+if \(\mu>\lambda\)  : \(P_C \approx 0 )\)
+
+then:
+
+\[
+throughput =T = Min(\lambda, \mu)
+\]
+
+now we consider \(P_{return}\):
+
+\[
+\lambda_{eff} = \lambda + p\cdot Throughput
+\]
+
+then:
+
+\[
+T = Min(\lambda + pT , \mu)
+\]
+
+\[
+T = \begin{cases}
+    \frac{\lambda}{1-p}    & \frac{\lambda}{1-p}<\mu \\
+    \mu    & \frac{\lambda}{1-p}\geq\mu
+\end{cases}
+\]
+
+it looks like we substitute \(\lambda\) with \(\frac{\lambda}{1-p}\).
+
+now we want to talk about \(P_C\):
+
+\[
+P_C = \frac{\rho^C}{\sum_{n=0}^C \rho^n}
+\]
+
+Where:
+\[
+\rho = \frac{\lambda}{\mu} \quad \text{(traffic intensity)}
+\]
+\[
+\rho^C : \text{The probability of the system having } C \text{ jobs}
+\]
+\[
+\sum_{n=0}^C \rho^n : \text{Normalization factor to ensure all probabilities sum to 1.}
+\]
+
+Steps to Compute \( P_C \):
+1. Calculate \( \rho = \frac{\lambda}{\mu} \).
+2. Compute \( \sum_{n=0}^C \rho^n \) using the formula for a geometric series:
+\[
+\sum_{n=0}^C \rho^n = \frac{1 - \rho^{C+1}}{1 - \rho}, \quad \text{if } \rho \neq 1.
+\]
+3. Substitute into \( P_C \):
+\[
+P_C = \frac{\rho^C (1 - \rho)}{1 - \rho^{C+1}}, \quad \text{if } \rho \neq 1.
+\]
+
+now lets breakdown the code we wrote:
+
+\includegraphics[scale=0.5]{code34.jpg}
+
+now like before, in the while loop we generate some random variables and determine the next event:
+
+\includegraphics[scale=0.5]{code35.jpg}
+
+exactly like before we handle events in each situation:
+
+\includegraphics[scale=0.5]{code36.jpg}
+
+\includegraphics[scale=0.5]{code37.jpg}
+
+the similuation is finished now, and now we can calculate some properties and derive the results:
+
+for \(P = 0.1, k=10, \lambda=3, \mu=10\):
+
+\includegraphics[scale=0.4]{code38.jpg}
+
+\includegraphics[scale=0.4]{code39.jpg}
+
+\includegraphics[scale=0.4]{code40.jpg}
+
+\newpage
+
+the statistics of system is:
+
+\includegraphics[scale=0.4]{code41.jpg}
+
+and also for other cases (parameters for arrivals and \(\dots\):
+
+for \(P = 0.1, k=10, \lambda=6, \mu=10\):
+
+\includegraphics[scale=0.4]{code42.jpg}
+
+\includegraphics[scale=0.4]{code43.jpg}
+
+\includegraphics[scale=0.4]{code44.jpg}
+
+the statistics of system is:
+
+\includegraphics[scale=0.5]{code45.jpg}
+
+for \(P = 0.1, k=10, \lambda=6, \mu=10\):
+
+\includegraphics[scale=0.4]{code46.jpg}
+
+\includegraphics[scale=0.4]{code47.jpg}
+
+\includegraphics[scale=0.4]{code48.jpg}
+
+the statistics of system is:
+
+\includegraphics[scale=0.5]{code49.jpg}
+
+we know that while we are increasing \(\mu\), we are increasing the return-jobs.
+
+and while \(\mu\) is less than\(\lambda\), denial rate is high.
+
+so if we define a cost function as below:
+
+\[
+Cost = A\times denials + B\times returnjobs
+\]
+
+there is an optimum \(\mu\) in the middle.
+
+so we sweep \(\mu\):
+
+\includegraphics[scale=0.5]{code50.jpg}
+
+lets plot denial-jobs verse service rate \(\mu\):
+
+\includegraphics[scale=0.4]{code51.jpg}
+
+lets plot return-jobs verse service rate \(\mu\):
+
+\includegraphics[scale=0.4]{code52.jpg}
+
+lets plot cost function verse service rate \(\mu\):
+
+for A=B=1:
+
+\includegraphics[scale=0.4]{code53.jpg}
+
+so we expect, if we increase B, then the cost function acts a ascending function and if we increase A, cost function acts as a descending function.
+
+for A=1, B=10:
+
+\includegraphics[scale=0.4]{code54.jpg}
+
+for A=10, B=1:
+
+\includegraphics[scale=0.4]{code55.jpg}
+
+for A=1, B=6 and for mu=1 to 400:
+
+\includegraphics[scale=0.4]{code55.jpg}
+
+\includegraphics[scale=0.4]{code57.jpg}
+
+\includegraphics[scale=0.4]{code58.jpg}
+
+now we can see that looks like there is an optimum in the middle for cost funtion. but as there is a high variance in return-job values we can not see it Vividly.
+
+if we set p value in each iteration coresponding to \(\mu\) like this:
+
+\[
+P(\mu) = 2(\frac{1}{1+e^{-0.25\mu}}-0.5)
+\]
+
+lets take a theoriticall look at the problem.
+
+\[
+C(\mu) = A \times P_{block}\times \text{number of jobs} + B \times N \times 2(\frac{1}{1+e^{-0.25\mu}}-0.5)
+\]
+
+we saw below equation before:
+
+\[
+P[\text{a job being rejected}] = P_{block} = \frac{\lambda}{\mu}\times\frac{1}{N}
+\]
+
+then:
+
+\[
+C(\mu) = A \times N\times \frac{\lambda}{\mu}\times\frac{1}{N} + B \times N \times 2(\frac{1}{1+e^{-0.25\mu}}-0.5)
+\]
+
+we can easily see that \(P_{block}\) is decreasig with \(\mu\) and \(P_{return}\) is increasing with \(\mu\) by expectation.
+
+now we can find derivative of C(\(\mu\) with respect to \(\mu\).
+
+\[
+\frac{-A\lambda}{\mu^2} + 2BN(\frac{0.25e^{-0.25\mu}}{(1+e^{-0.25\mu})^2} = 0
+\]
+
+we can solve this equation for fixed A, B, \(\lambda\), N with respect to \(\mu\).
+
+note that we can not obtain a closed-form answer but we will evaluate the answer in special cases.
+
+we obtain results for different cases:
+
+\newpage
+
+A=1, B=0.5:
+
+\includegraphics[scale=0.4]{code59.jpg}
+
+\includegraphics[scale=0.4]{code60.jpg}
+
+\includegraphics[scale=0.4]{code61.jpg}
+
+we have an optimum around \(\mu=3\) when \(\lambda=10\) is fixed.
+
+\includegraphics[scale=0.4]{code62.jpg}
+
+A=0.5, B=1:
+
+\includegraphics[scale=0.4]{code63.jpg}
+
+A=1, B=1:
+
+\includegraphics[scale=0.4]{code64.jpg}
+
+now we evaluate the analytic equation that we obtained before:
+
+\[
+\frac{-A\lambda}{\mu^2} + 2BN(\frac{0.25e^{-0.25\mu}}{(1+e^{-0.25\mu})^2} = 0
+\]
+
+if A=1, B=0.5:
+
+\includegraphics[scale=0.3]{code67.jpg}
+
+\[
+ArgMin C(\mu) = 7.873
+\]
+
+if A=0.5, B=1:
+
+\includegraphics[scale=0.3]{code68.jpg}
+
+\[
+ArgMin C((\mu) = 3.03
+\]
+
+if A=1, B=1:
+
+\includegraphics[scale=0.3]{code69.jpg}
+
+\[
+ArgMin C(\mu) = 4.71
+\]
+
+if you compare to the simulation result, the result is very similar and the difference is because of variouse simplification that we had in the code and in the theory.
+
+for example we assume simplified \(P_{block}(\mu)\) as a linear relation.
+
+we used a 6 degree polynomial regression from probabilistic data.(contains multiple rounding and errors and \(\dots\).
+
+and lots of simplification in our system logic in the code.
+
+but the results are significantly close.
+
+
+\end{document}
